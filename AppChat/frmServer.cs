@@ -10,22 +10,23 @@ using System.Windows.Forms;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
-namespace AppChat{
+
+namespace AppChat
+{
     public partial class frmServer : Form
     {
-        //khai báo
-        Socket socketserver, socketclient;
-        IPEndPoint iep;
-        IPAddress ia;
-        int port = 9999;
-        Thread listeningThread;
+        private Socket socketserver;
+        private IPEndPoint iep;
+        private IPAddress ia;
+        private int port = 9999;
+        private Thread listeningThread;
+        private Dictionary<Socket, string> clientSockets = new Dictionary<Socket, string>();
 
         public frmServer()
         {
             InitializeComponent();
         }
 
-        //định dạng phần tin nhắn chia bên trái phải
         private void AppendMessage(string message, bool isServer)
         {
             vbserver.Invoke((MethodInvoker)delegate
@@ -33,7 +34,7 @@ namespace AppChat{
                 vbserver.SelectionAlignment = isServer ? HorizontalAlignment.Right : HorizontalAlignment.Left;
                 vbserver.SelectionColor = isServer ? Color.Blue : Color.Green;
                 vbserver.AppendText(message + "\n");
-                vbserver.SelectionColor = vbserver.ForeColor; // Reset color
+                vbserver.SelectionColor = vbserver.ForeColor;
             });
         }
 
@@ -42,13 +43,13 @@ namespace AppChat{
             Socket clientSocket = (Socket)obj;
             byte[] buffer = new byte[1024];
             int receivedBytes;
-
             try
             {
                 while ((receivedBytes = clientSocket.Receive(buffer)) > 0)
                 {
                     string text = Encoding.UTF8.GetString(buffer, 0, receivedBytes);
-                    AppendMessage("[Client]: " + text, false);
+                    AppendMessage(text, false);
+                    BroadcastMessage(text, clientSocket);
                 }
             }
             catch (SocketException ex)
@@ -57,33 +58,63 @@ namespace AppChat{
             }
             finally
             {
+                clientSockets.Remove(clientSocket);
                 clientSocket.Close();
+                UpdateClientList();
             }
         }
 
+        private void BroadcastMessage(string message, Socket excludeSocket)
+        {
+            byte[] data = Encoding.UTF8.GetBytes(message);
+            foreach (var client in clientSockets.Keys)
+            {
+                if (client != excludeSocket)
+                {
+                    client.Send(data);
+                }
+            }
+        }
+
+        private void SendMessageToClient(string message, string clientIP)
+        {
+            byte[] data = Encoding.UTF8.GetBytes(message);
+            foreach (var client in clientSockets)
+            {
+                if (client.Value == clientIP)
+                {
+                    client.Key.Send(data);
+                    break;
+                }
+            }
+        }
 
         private void btnSend_Click(object sender, EventArgs e)
         {
-            if (socketclient != null && socketclient.Connected)
-            {
-                string message = txtSend.Text;
-                byte[] data = Encoding.UTF8.GetBytes(message);
-                socketclient.Send(data);
+            string message = txtSend.Text;
+            string fullMessage = $"[server]: {message}";
+            byte[] data = Encoding.UTF8.GetBytes(fullMessage);
 
-                AppendMessage("[Server]: " + message, true);
-                txtSend.Clear();
+            if (lstClients.SelectedItem != null)
+            {
+                string selectedClientIP = lstClients.SelectedItem.ToString();
+                SendMessageToClient(fullMessage, selectedClientIP);
             }
             else
             {
-                MessageBox.Show("Không có kết nối nào để gửi dữ liệu.", "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                foreach (var client in clientSockets.Keys)
+                {
+                    client.Send(data);
+                }
             }
+
+            AppendMessage(fullMessage, true);
+            txtSend.Clear();
         }
 
-
-        private void btnCreateSocketServer_Click(object sender, EventArgs e){
-           
+        private void btnCreateSocketServer_Click(object sender, EventArgs e)
+        {
             DialogResult result = MessageBox.Show("Bạn có muốn tạo socket không?", "Xác nhận", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
-
             if (result == DialogResult.Yes)
             {
                 try
@@ -93,11 +124,8 @@ namespace AppChat{
                     iep = new IPEndPoint(ia, port);
                     socketserver.Bind(iep);
                     socketserver.Listen(50);
-
                     MessageBox.Show("Đã tạo socket thành công", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Information);
-
-                    // Khởi động luồng lắng nghe kết nối từ client
-                    listeningThread = new Thread(ListenForConnections);
+                    listeningThread = new Thread(ListenForClients);
                     listeningThread.IsBackground = true;
                     listeningThread.Start();
                 }
@@ -112,52 +140,25 @@ namespace AppChat{
             }
         }
 
-        //luôn luôn chấp nhận kết nối từ client
         private void ListenForClients()
-        {
-            while (true)
-            {
-                socketclient = socketserver.Accept();
-                Thread receiveThread = new Thread(ReceiveData);
-                receiveThread.IsBackground = true;
-                receiveThread.Start(socketclient);
-            }
-        }
-
-        //hiển thị hộp thoại xác nhận kết nối từ client , nếu kh chập nhận sẽ không gửi tin nhắn đc 
-        private void ListenForConnections()
         {
             while (true)
             {
                 try
                 {
-                    // Lắng nghe kết nối đến
                     Socket tempClient = socketserver.Accept();
-
-                    // Lấy thông tin thiết bị kết nối
                     string clientInfo = tempClient.RemoteEndPoint.ToString();
 
-                    // Hiển thị hộp thoại xác nhận trên UI thread
                     this.Invoke((MethodInvoker)delegate
                     {
-                        DialogResult dialogResult = MessageBox.Show($"Thiết bị {clientInfo} đang cố kết nối. Bạn có muốn chấp nhận không?",
-                            "Yêu cầu kết nối", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+                        clientSockets.Add(tempClient, clientInfo);
+                        MessageBox.Show("Đã chấp nhận kết nối từ " + clientInfo, "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
-                        if (dialogResult == DialogResult.Yes)
-                        {
-                            socketclient = tempClient;
-                            MessageBox.Show("Đã chấp nhận kết nối từ " + clientInfo, "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        Thread receiveThread = new Thread(ReceiveData);
+                        receiveThread.IsBackground = true;
+                        receiveThread.Start(tempClient);
 
-                            // Khởi động luồng nhận dữ liệu từ client
-                            Thread receiveThread = new Thread(ReceiveData);
-                            receiveThread.IsBackground = true;
-                            receiveThread.Start(socketclient);
-                        }
-                        else
-                        {
-                            tempClient.Close();
-                            MessageBox.Show("Đã từ chối kết nối từ " + clientInfo, "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                        }
+                        UpdateClientList();
                     });
                 }
                 catch (Exception ex)
@@ -168,21 +169,26 @@ namespace AppChat{
             }
         }
 
-        private void btnSendImage_Click(object sender, EventArgs e)
-        {
-
-        }
-
-        //đóng các kết nối, luồng
         private void frmServer_FormClosing(object sender, FormClosingEventArgs e)
         {
-            // Đảm bảo đóng các kết nối và luồng khi form đóng
             listeningThread?.Abort();
-            socketclient?.Close();
+            foreach (var client in clientSockets.Keys)
+            {
+                client.Close();
+            }
             socketserver?.Close();
         }
 
-        
-
+        private void UpdateClientList()
+        {
+            lstClients.Invoke((MethodInvoker)delegate
+            {
+                lstClients.Items.Clear();
+                foreach (var client in clientSockets.Values)
+                {
+                    lstClients.Items.Add(client);
+                }
+            });
+        }
     }
 }

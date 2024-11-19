@@ -29,7 +29,6 @@
         private void InitializeComponent()
         {
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(frmServer));
-            this.textBox1 = new System.Windows.Forms.TextBox();
             this.btnCreateSocketServer = new System.Windows.Forms.Button();
             this.btnSendServer = new System.Windows.Forms.Button();
             this.txtSend = new System.Windows.Forms.TextBox();
@@ -38,28 +37,21 @@
             this.btnSendFile = new System.Windows.Forms.ToolStripButton();
             this.btnSendImage = new System.Windows.Forms.ToolStripButton();
             this.toolStripButton3 = new System.Windows.Forms.ToolStripButton();
+            this.label2 = new System.Windows.Forms.Label();
+            this.lstClients = new System.Windows.Forms.ListBox();
             this.toolStrip1.SuspendLayout();
             this.SuspendLayout();
-            // 
-            // textBox1
-            // 
-            this.textBox1.Font = new System.Drawing.Font("Microsoft Sans Serif", 13.8F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.textBox1.Location = new System.Drawing.Point(12, 12);
-            this.textBox1.Name = "textBox1";
-            this.textBox1.Size = new System.Drawing.Size(130, 34);
-            this.textBox1.TabIndex = 0;
-            this.textBox1.Text = "Máy Chủ";
             // 
             // btnCreateSocketServer
             // 
             this.btnCreateSocketServer.BackColor = System.Drawing.Color.Red;
             this.btnCreateSocketServer.Font = new System.Drawing.Font("Microsoft Sans Serif", 10.2F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.btnCreateSocketServer.ForeColor = System.Drawing.SystemColors.ActiveCaptionText;
-            this.btnCreateSocketServer.Location = new System.Drawing.Point(176, 8);
+            this.btnCreateSocketServer.Location = new System.Drawing.Point(424, 10);
             this.btnCreateSocketServer.Name = "btnCreateSocketServer";
-            this.btnCreateSocketServer.Size = new System.Drawing.Size(215, 38);
+            this.btnCreateSocketServer.Size = new System.Drawing.Size(158, 44);
             this.btnCreateSocketServer.TabIndex = 1;
-            this.btnCreateSocketServer.Text = "Create Socket Sever";
+            this.btnCreateSocketServer.Text = "Tạo";
             this.btnCreateSocketServer.UseVisualStyleBackColor = false;
             this.btnCreateSocketServer.Click += new System.EventHandler(this.btnCreateSocketServer_Click);
             // 
@@ -75,6 +67,7 @@
             // 
             // txtSend
             // 
+            this.txtSend.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.txtSend.Location = new System.Drawing.Point(12, 384);
             this.txtSend.Multiline = true;
             this.txtSend.Name = "txtSend";
@@ -100,7 +93,7 @@
             this.toolStripButton3});
             this.toolStrip1.Location = new System.Drawing.Point(12, 356);
             this.toolStrip1.Name = "toolStrip1";
-            this.toolStrip1.Size = new System.Drawing.Size(139, 27);
+            this.toolStrip1.Size = new System.Drawing.Size(100, 27);
             this.toolStrip1.TabIndex = 7;
             this.toolStrip1.Text = "toolStrip1";
             // 
@@ -121,7 +114,6 @@
             this.btnSendImage.Name = "btnSendImage";
             this.btnSendImage.Size = new System.Drawing.Size(29, 24);
             this.btnSendImage.Text = "toolStripButton2";
-            this.btnSendImage.Click += new System.EventHandler(this.btnSendImage_Click);
             // 
             // toolStripButton3
             // 
@@ -132,6 +124,26 @@
             this.toolStripButton3.Size = new System.Drawing.Size(29, 24);
             this.toolStripButton3.Text = "toolStripButton3";
             // 
+            // label2
+            // 
+            this.label2.AutoSize = true;
+            this.label2.Font = new System.Drawing.Font("Microsoft Sans Serif", 19.8F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label2.Location = new System.Drawing.Point(12, 10);
+            this.label2.Name = "label2";
+            this.label2.Size = new System.Drawing.Size(120, 38);
+            this.label2.TabIndex = 9;
+            this.label2.Text = "Server";
+            // 
+            // lstClients
+            // 
+            this.lstClients.Font = new System.Drawing.Font("Microsoft Sans Serif", 10.8F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lstClients.FormattingEnabled = true;
+            this.lstClients.ItemHeight = 22;
+            this.lstClients.Location = new System.Drawing.Point(160, 6);
+            this.lstClients.Name = "lstClients";
+            this.lstClients.Size = new System.Drawing.Size(238, 48);
+            this.lstClients.TabIndex = 10;
+            // 
             // frmServer
             // 
             this.AcceptButton = this.btnSendServer;
@@ -139,12 +151,13 @@
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.SystemColors.ActiveCaption;
             this.ClientSize = new System.Drawing.Size(594, 444);
+            this.Controls.Add(this.lstClients);
+            this.Controls.Add(this.label2);
             this.Controls.Add(this.toolStrip1);
             this.Controls.Add(this.vbserver);
             this.Controls.Add(this.txtSend);
             this.Controls.Add(this.btnSendServer);
             this.Controls.Add(this.btnCreateSocketServer);
-            this.Controls.Add(this.textBox1);
             this.Name = "frmServer";
             this.Text = "Chat Server";
             this.toolStrip1.ResumeLayout(false);
@@ -155,8 +168,6 @@
         }
 
         #endregion
-
-        private System.Windows.Forms.TextBox textBox1;
         private System.Windows.Forms.Button btnCreateSocketServer;
         private System.Windows.Forms.Button btnSendServer;
         private System.Windows.Forms.TextBox txtSend;
@@ -165,6 +176,8 @@
         private System.Windows.Forms.ToolStripButton btnSendFile;
         private System.Windows.Forms.ToolStripButton btnSendImage;
         private System.Windows.Forms.ToolStripButton toolStripButton3;
+        private System.Windows.Forms.Label label2;
+        private System.Windows.Forms.ListBox lstClients;
     }
 }
 

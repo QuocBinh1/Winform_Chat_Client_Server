@@ -29,7 +29,6 @@
         private void InitializeComponent()
         {
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(frmClient));
-            this.textBox1 = new System.Windows.Forms.TextBox();
             this.btnConnectClient = new System.Windows.Forms.Button();
             this.btnSend = new System.Windows.Forms.Button();
             this.txtSend = new System.Windows.Forms.TextBox();
@@ -38,27 +37,20 @@
             this.btnSendFile = new System.Windows.Forms.ToolStripButton();
             this.btnSendImage = new System.Windows.Forms.ToolStripButton();
             this.toolStripButton3 = new System.Windows.Forms.ToolStripButton();
+            this.lblClientID = new System.Windows.Forms.Label();
+            this.label2 = new System.Windows.Forms.Label();
             this.toolStrip1.SuspendLayout();
             this.SuspendLayout();
-            // 
-            // textBox1
-            // 
-            this.textBox1.Font = new System.Drawing.Font("Microsoft Sans Serif", 13.8F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.textBox1.Location = new System.Drawing.Point(26, 12);
-            this.textBox1.Name = "textBox1";
-            this.textBox1.Size = new System.Drawing.Size(150, 34);
-            this.textBox1.TabIndex = 0;
-            this.textBox1.Text = "Người Dùng";
             // 
             // btnConnectClient
             // 
             this.btnConnectClient.BackColor = System.Drawing.Color.Red;
             this.btnConnectClient.Font = new System.Drawing.Font("Microsoft Sans Serif", 10.2F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnConnectClient.Location = new System.Drawing.Point(193, 9);
+            this.btnConnectClient.Location = new System.Drawing.Point(452, 5);
             this.btnConnectClient.Name = "btnConnectClient";
-            this.btnConnectClient.Size = new System.Drawing.Size(173, 37);
+            this.btnConnectClient.Size = new System.Drawing.Size(112, 37);
             this.btnConnectClient.TabIndex = 1;
-            this.btnConnectClient.Text = "Conect To Server";
+            this.btnConnectClient.Text = "Kết Nối";
             this.btnConnectClient.UseVisualStyleBackColor = false;
             this.btnConnectClient.Click += new System.EventHandler(this.btnConnectClient_Click);
             // 
@@ -100,7 +92,7 @@
             this.toolStripButton3});
             this.toolStrip1.Location = new System.Drawing.Point(12, 361);
             this.toolStrip1.Name = "toolStrip1";
-            this.toolStrip1.Size = new System.Drawing.Size(100, 31);
+            this.toolStrip1.Size = new System.Drawing.Size(100, 27);
             this.toolStrip1.TabIndex = 8;
             this.toolStrip1.Text = "toolStrip1";
             // 
@@ -121,7 +113,6 @@
             this.btnSendImage.Name = "btnSendImage";
             this.btnSendImage.Size = new System.Drawing.Size(29, 24);
             this.btnSendImage.Text = "toolStripButton2";
-            this.btnSendImage.Click += new System.EventHandler(this.btnSendImage_Click);
             // 
             // toolStripButton3
             // 
@@ -132,22 +123,42 @@
             this.toolStripButton3.Size = new System.Drawing.Size(29, 24);
             this.toolStripButton3.Text = "toolStripButton3";
             // 
+            // lblClientID
+            // 
+            this.lblClientID.AutoSize = true;
+            this.lblClientID.Font = new System.Drawing.Font("Microsoft Sans Serif", 13.8F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lblClientID.Location = new System.Drawing.Point(196, 9);
+            this.lblClientID.Name = "lblClientID";
+            this.lblClientID.Size = new System.Drawing.Size(79, 29);
+            this.lblClientID.TabIndex = 10;
+            this.lblClientID.Text = "label1";
+            // 
+            // label2
+            // 
+            this.label2.AutoSize = true;
+            this.label2.Font = new System.Drawing.Font("Microsoft Sans Serif", 19.8F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label2.Location = new System.Drawing.Point(12, 6);
+            this.label2.Name = "label2";
+            this.label2.Size = new System.Drawing.Size(106, 38);
+            this.label2.TabIndex = 11;
+            this.label2.Text = "Client";
+            // 
             // frmClient
             // 
             this.AcceptButton = this.btnSend;
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.SystemColors.ActiveCaption;
-            this.ClientSize = new System.Drawing.Size(587, 441);
+            this.ClientSize = new System.Drawing.Size(591, 441);
+            this.Controls.Add(this.label2);
+            this.Controls.Add(this.lblClientID);
             this.Controls.Add(this.toolStrip1);
             this.Controls.Add(this.vbclient);
             this.Controls.Add(this.txtSend);
             this.Controls.Add(this.btnSend);
             this.Controls.Add(this.btnConnectClient);
-            this.Controls.Add(this.textBox1);
             this.Name = "frmClient";
             this.Text = "Chat Client";
-            this.Load += new System.EventHandler(this.frmClient_Load);
             this.toolStrip1.ResumeLayout(false);
             this.toolStrip1.PerformLayout();
             this.ResumeLayout(false);
@@ -156,8 +167,6 @@
         }
 
         #endregion
-
-        private System.Windows.Forms.TextBox textBox1;
         private System.Windows.Forms.Button btnConnectClient;
         private System.Windows.Forms.Button btnSend;
         private System.Windows.Forms.TextBox txtSend;
@@ -166,6 +175,8 @@
         private System.Windows.Forms.ToolStripButton btnSendFile;
         private System.Windows.Forms.ToolStripButton btnSendImage;
         private System.Windows.Forms.ToolStripButton toolStripButton3;
+        private System.Windows.Forms.Label lblClientID;
+        private System.Windows.Forms.Label label2;
     }
 }
 

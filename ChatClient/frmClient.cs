@@ -10,42 +10,22 @@ using System.Windows.Forms;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
-using AppChat;
+
 namespace ChatClient
 {
     public partial class frmClient : Form
     {
-        Socket socketclient , server;
-        IPAddress ia;
-        IPEndPoint iep;
-        int port = 9999;
-        Thread receivingThread;
+        private Socket socketclient;
+        private IPAddress ia;
+        private IPEndPoint iep;
+        private int port = 9999;
+        private Thread receivingThread;
+
         public frmClient()
         {
             InitializeComponent();
         }
 
-        private void frmClient_Load(object sender, EventArgs e)
-        {
-
-        }
-        private void AppendMessage(string message, bool isClient)
-        {
-            vbclient.Invoke((MethodInvoker)delegate
-            {
-                vbclient.SelectionAlignment = isClient ? HorizontalAlignment.Right : HorizontalAlignment.Left;
-                vbclient.SelectionColor = isClient ? Color.Blue : Color.Green;
-                vbclient.AppendText(message + "\n");
-                vbclient.SelectionColor = vbclient.ForeColor; // Reset color
-            });
-        }
-        private void ClearMessages()
-        {
-            vbclient.Invoke((MethodInvoker)delegate
-            {
-                vbclient.Clear();
-            });
-        }
         private void btnConnectClient_Click(object sender, EventArgs e)
         {
             try
@@ -60,17 +40,15 @@ namespace ChatClient
                 receivingThread = new Thread(ReceiveData);
                 receivingThread.IsBackground = true;
                 receivingThread.Start();
-
-                // Clear the "Connecting to server..." message after successful connection
                 ClearMessages();
                 AppendMessage("Connected to server...", true);
+                lblClientID.Text = socketclient.LocalEndPoint.ToString();
             }
             catch (SocketException ex)
             {
-                MessageBox.Show("Unable to connect to server: " + ex.Message, "Connection Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show("Lỗi : Server chưa tạo socket \n  " + ex.Message, "Connection Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
-
 
         private void ReceiveData()
         {
@@ -81,8 +59,7 @@ namespace ChatClient
                     byte[] buffer = new byte[1024];
                     int receivedBytes = socketclient.Receive(buffer);
                     string text = Encoding.UTF8.GetString(buffer, 0, receivedBytes);
-
-                    AppendMessage("[Server]: " + text, false);
+                    AppendMessage(text, false);
                 }
                 catch (SocketException ex)
                 {
@@ -92,17 +69,16 @@ namespace ChatClient
             }
         }
 
-
-
         private void btnSend_Click(object sender, EventArgs e)
         {
             try
             {
                 string message = txtSend.Text;
-                byte[] data = Encoding.UTF8.GetBytes(message);
+                string fullMessage = $"[{socketclient.LocalEndPoint}]: {message}";
+                byte[] data = Encoding.UTF8.GetBytes(fullMessage);
                 socketclient.Send(data);
 
-                AppendMessage("[Client]: " + message, true);
+                AppendMessage($"[You]: {message}", true);
                 txtSend.Clear();
             }
             catch (SocketException ex)
@@ -110,22 +86,30 @@ namespace ChatClient
                 AppendMessage("Failed to send message: " + ex.Message, true);
             }
         }
+
+        private void AppendMessage(string message, bool isClient)
+        {
+            vbclient.Invoke((MethodInvoker)delegate
+            {
+                vbclient.SelectionAlignment = isClient ? HorizontalAlignment.Right : HorizontalAlignment.Left;
+                vbclient.SelectionColor = isClient ? Color.Blue : Color.Green;
+                vbclient.AppendText(message + "\n");
+                vbclient.SelectionColor = vbclient.ForeColor; // Reset color
+            });
+        }
+
+        private void ClearMessages()
+        {
+            vbclient.Invoke((MethodInvoker)delegate
+            {
+                vbclient.Clear();
+            });
+        }
+
         private void frmClient_FormClosing(object sender, FormClosingEventArgs e)
         {
             receivingThread?.Abort();
             socketclient?.Close();
         }
-
-        private void btnSendImage_Click(object sender, EventArgs e)
-        {
-
-        }
-
-        private void btnSendFile_Click(object sender, EventArgs e)
-        {
-
-        }
-
-
     }
 }
