@@ -34,12 +34,12 @@
             this.txtSend = new System.Windows.Forms.TextBox();
             this.vbclient = new System.Windows.Forms.RichTextBox();
             this.toolStrip1 = new System.Windows.Forms.ToolStrip();
+            this.btnEmoij = new System.Windows.Forms.ToolStripButton();
+            this.btnDeleteMessage = new System.Windows.Forms.ToolStripButton();
             this.btnSendFile = new System.Windows.Forms.ToolStripButton();
             this.btnImg = new System.Windows.Forms.ToolStripButton();
-            this.btnEmoij = new System.Windows.Forms.ToolStripButton();
             this.lblClientID = new System.Windows.Forms.Label();
             this.label2 = new System.Windows.Forms.Label();
-            this.btnDeleteMessage = new System.Windows.Forms.Button();
             this.toolStrip1.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -76,7 +76,7 @@
             // 
             // vbclient
             // 
-            this.vbclient.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.vbclient.Font = new System.Drawing.Font("Microsoft Sans Serif", 10.2F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.vbclient.Location = new System.Drawing.Point(12, 49);
             this.vbclient.Name = "vbclient";
             this.vbclient.ReadOnly = true;
@@ -89,33 +89,15 @@
             this.toolStrip1.Dock = System.Windows.Forms.DockStyle.None;
             this.toolStrip1.ImageScalingSize = new System.Drawing.Size(20, 20);
             this.toolStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.btnSendFile,
+            this.btnEmoij,
+            this.btnDeleteMessage,
             this.btnImg,
-            this.btnEmoij});
+            this.btnSendFile});
             this.toolStrip1.Location = new System.Drawing.Point(12, 361);
             this.toolStrip1.Name = "toolStrip1";
-            this.toolStrip1.Size = new System.Drawing.Size(100, 27);
+            this.toolStrip1.Size = new System.Drawing.Size(168, 27);
             this.toolStrip1.TabIndex = 8;
             this.toolStrip1.Text = "toolStrip1";
-            // 
-            // btnSendFile
-            // 
-            this.btnSendFile.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
-            this.btnSendFile.Image = ((System.Drawing.Image)(resources.GetObject("btnSendFile.Image")));
-            this.btnSendFile.ImageTransparentColor = System.Drawing.Color.Magenta;
-            this.btnSendFile.Name = "btnSendFile";
-            this.btnSendFile.Size = new System.Drawing.Size(29, 24);
-            this.btnSendFile.Text = "toolStripButton1";
-            // 
-            // btnImg
-            // 
-            this.btnImg.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
-            this.btnImg.Image = ((System.Drawing.Image)(resources.GetObject("btnImg.Image")));
-            this.btnImg.ImageTransparentColor = System.Drawing.Color.Magenta;
-            this.btnImg.Name = "btnImg";
-            this.btnImg.Size = new System.Drawing.Size(29, 24);
-            this.btnImg.Text = "toolStripButton2";
-            this.btnImg.Click += new System.EventHandler(this.btnImg_Click);
             // 
             // btnEmoij
             // 
@@ -127,15 +109,45 @@
             this.btnEmoij.Text = "toolStripButton3";
             this.btnEmoij.Click += new System.EventHandler(this.btnEmoij_Click);
             // 
+            // btnDeleteMessage
+            // 
+            this.btnDeleteMessage.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
+            this.btnDeleteMessage.Image = ((System.Drawing.Image)(resources.GetObject("btnDeleteMessage.Image")));
+            this.btnDeleteMessage.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.btnDeleteMessage.Name = "btnDeleteMessage";
+            this.btnDeleteMessage.Size = new System.Drawing.Size(29, 24);
+            this.btnDeleteMessage.Text = "toolStripButton1";
+            this.btnDeleteMessage.Click += new System.EventHandler(this.btnDeleteMessage_Click);
+            // 
+            // btnSendFile
+            // 
+            this.btnSendFile.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
+            this.btnSendFile.Image = ((System.Drawing.Image)(resources.GetObject("btnSendFile.Image")));
+            this.btnSendFile.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.btnSendFile.Name = "btnSendFile";
+            this.btnSendFile.Size = new System.Drawing.Size(29, 24);
+            this.btnSendFile.Text = "toolStripButton1";
+            this.btnSendFile.Click += new System.EventHandler(this.btnSendFile_Click);
+            // 
+            // btnImg
+            // 
+            this.btnImg.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
+            this.btnImg.Image = ((System.Drawing.Image)(resources.GetObject("btnImg.Image")));
+            this.btnImg.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.btnImg.Name = "btnImg";
+            this.btnImg.Size = new System.Drawing.Size(29, 24);
+            this.btnImg.Text = "toolStripButton2";
+            this.btnImg.Click += new System.EventHandler(this.btnImg_Click);
+            // 
             // lblClientID
             // 
             this.lblClientID.AutoSize = true;
             this.lblClientID.Font = new System.Drawing.Font("Microsoft Sans Serif", 13.8F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lblClientID.Location = new System.Drawing.Point(196, 9);
+            this.lblClientID.Location = new System.Drawing.Point(179, 9);
             this.lblClientID.Name = "lblClientID";
-            this.lblClientID.Size = new System.Drawing.Size(119, 29);
+            this.lblClientID.Size = new System.Drawing.Size(187, 29);
             this.lblClientID.TabIndex = 10;
-            this.lblClientID.Text = "Địa Chỉ IP";
+            this.lblClientID.Text = "Địa Chỉ IP Client";
             // 
             // label2
             // 
@@ -147,16 +159,6 @@
             this.label2.TabIndex = 11;
             this.label2.Text = "Client";
             // 
-            // btnDeleteMessage
-            // 
-            this.btnDeleteMessage.Location = new System.Drawing.Point(115, 357);
-            this.btnDeleteMessage.Name = "btnDeleteMessage";
-            this.btnDeleteMessage.Size = new System.Drawing.Size(96, 31);
-            this.btnDeleteMessage.TabIndex = 13;
-            this.btnDeleteMessage.Text = "Xóa Tin Nhắn";
-            this.btnDeleteMessage.UseVisualStyleBackColor = true;
-            this.btnDeleteMessage.Click += new System.EventHandler(this.btnDeleteMessage_Click);
-            // 
             // frmClient
             // 
             this.AcceptButton = this.btnSend;
@@ -164,7 +166,6 @@
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.SystemColors.ActiveCaption;
             this.ClientSize = new System.Drawing.Size(581, 441);
-            this.Controls.Add(this.btnDeleteMessage);
             this.Controls.Add(this.label2);
             this.Controls.Add(this.lblClientID);
             this.Controls.Add(this.toolStrip1);
@@ -192,7 +193,7 @@
         private System.Windows.Forms.ToolStripButton btnEmoij;
         private System.Windows.Forms.Label lblClientID;
         private System.Windows.Forms.Label label2;
-        private System.Windows.Forms.Button btnDeleteMessage;
+        private System.Windows.Forms.ToolStripButton btnDeleteMessage;
     }
 }
 

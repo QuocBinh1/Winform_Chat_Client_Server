@@ -11,6 +11,7 @@ using System.Windows.Forms;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
+using System.Reflection.Emit;
 
 namespace AppChat
 {
@@ -23,13 +24,14 @@ namespace AppChat
         private Thread listeningThread;
         private Dictionary<Socket, string> clientSockets = new Dictionary<Socket, string>();
 
-
+        private string currentTime = DateTime.Now.ToString("HH:mm");
+        
 
         public frmServer()
         {
             InitializeComponent();
-        }
 
+        }
         private void AppendMessage(string message, bool isServer)
         {
             vbserver.Invoke((MethodInvoker)delegate
@@ -70,9 +72,10 @@ namespace AppChat
             {
                 clientSockets.Remove(clientSocket);
                 clientSocket.Close();
-                UpdateClientList();
+                UpdateClientList(); // Cập nhật GroupBox sau khi client ngắt kết nối
             }
         }
+
 
         private void BroadcastMessage(string message, Socket excludeSocket)
         {
@@ -102,22 +105,35 @@ namespace AppChat
         private void btnSend_Click(object sender, EventArgs e)
         {
             string message = txtSend.Text;
-            string currentTime = DateTime.Now.ToString("HH:mm:ss");
+            if (string.IsNullOrWhiteSpace(message)) return;
 
             string fullMessage = $"[{currentTime}-Server]: {message}";
-
             byte[] data = Encoding.UTF8.GetBytes(fullMessage);
 
-            if (lstClients.SelectedItem != null)
+            List<Socket> selectedClients = new List<Socket>();
+
+            foreach (var control in groupBox1.Controls)
             {
-                string selectedClientIP = lstClients.SelectedItem.ToString();
-                SendMessageToClient(fullMessage, selectedClientIP);
+                if (control is CheckBox checkBox && checkBox.Checked)
+                {
+                    Socket clientSocket = (Socket)checkBox.Tag;
+                    selectedClients.Add(clientSocket);
+                }
+            }
+
+            if (selectedClients.Count > 0)
+            {
+                foreach (var clientSocket in selectedClients)
+                {
+                    clientSocket.Send(data);
+                }
             }
             else
             {
-                foreach (var client in clientSockets.Keys)
+                // Nếu không có client nào được chọn, gửi tin nhắn đến tất cả
+                foreach (var clientSocket in clientSockets.Keys)
                 {
-                    client.Send(data);
+                    clientSocket.Send(data);
                 }
             }
 
@@ -125,8 +141,10 @@ namespace AppChat
             txtSend.Clear();
         }
 
+
         private void btnCreateSocketServer_Click(object sender, EventArgs e)
         {
+
             DialogResult result = MessageBox.Show("Bạn có muốn tạo socket không?", "Xác nhận", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
             if (result == DialogResult.Yes)
             {
@@ -141,6 +159,8 @@ namespace AppChat
                     listeningThread = new Thread(ListenForClients);
                     listeningThread.IsBackground = true;
                     listeningThread.Start();
+                    label3.Text = socketserver.LocalEndPoint.ToString();
+
                 }
                 catch (Exception ex)
                 {
@@ -195,15 +215,25 @@ namespace AppChat
 
         private void UpdateClientList()
         {
-            lstClients.Invoke((MethodInvoker)delegate
+            groupBox1.Invoke((MethodInvoker)delegate
             {
-                lstClients.Items.Clear();
-                foreach (var client in clientSockets.Values)
+                groupBox1.Controls.Clear();
+                int y = 10; // Vị trí ban đầu của checkbox trong GroupBox
+                foreach (var client in clientSockets)
                 {
-                    lstClients.Items.Add(client);
+                    CheckBox checkBox = new CheckBox
+                    {
+                        Text = client.Value,
+                        Tag = client.Key, // Lưu Socket vào Tag để dễ sử dụng sau
+                        Location = new Point(10, y),
+                        AutoSize = true
+                    };
+                    groupBox1.Controls.Add(checkBox);
+                    y += 30; // Khoảng cách giữa các checkbox
                 }
             });
         }
+
 
         private void DeleteMessage(string message)
         {
@@ -222,23 +252,7 @@ namespace AppChat
         }
 
 
-        private void btnDeleteMessage_Click(object sender, EventArgs e)
-        {
-            if (vbserver.SelectedText.Length > 0)
-            {
-                vbserver.ReadOnly = false;
-                string selectedText = vbserver.SelectedText;
-                vbserver.SelectedText = string.Empty;
-
-                // Gửi tin nhắn xóa tới các client khác
-                BroadcastMessage("[delete]" + selectedText, null);
-                vbserver.ReadOnly = true;
-            }
-            else
-            {
-                MessageBox.Show("Vui lòng bôi đen tin nhắn cần xóa!", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-            }
-        }
+       
 
 
         private void btnEmoij_Click(object sender, EventArgs e)
@@ -278,6 +292,76 @@ namespace AppChat
             // Đảm bảo bảng emoji hiển thị trên cùng các điều khiển khác
             emojiPanel.BringToFront();
         }
+
+        private void btnDeleteMessage_Click_1(object sender, EventArgs e)
+        {
+            if (vbserver.SelectedText.Length > 0)
+            {
+                vbserver.ReadOnly = false;
+                string selectedText = vbserver.SelectedText;
+                vbserver.SelectedText = string.Empty;
+
+                // Gửi tin nhắn xóa tới các client khác
+                BroadcastMessage("[delete]" + selectedText, null);
+                vbserver.ReadOnly = true;
+            }
+            else
+            {
+                MessageBox.Show("Vui lòng bôi đen tin nhắn cần xóa!", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            }
+        }
+
+        private void btnSendFile_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void btnSendImage_Click(object sender, EventArgs e)
+        {
+            vbserver.ReadOnly = false;
+            using (OpenFileDialog openFileDialog = new OpenFileDialog())
+            {
+                openFileDialog.Filter = "Image Files|*.jpg;*.jpeg;*.png;*.bmp;*.gif";
+                openFileDialog.Title = "Select an Image";
+                if (openFileDialog.ShowDialog() == DialogResult.OK)
+                {
+                    string imagePath = openFileDialog.FileName;
+                    try
+                    {
+                        Image originalImage = Image.FromFile(imagePath);
+
+                        // Điều chỉnh kích thước (ví dụ: 100x100 pixel)
+                        int newWidth = 200;
+                        int newHeight = 150;
+
+                        using (Bitmap resizedImage = new Bitmap(originalImage, newWidth, newHeight))
+                        {
+                            // Đặt ảnh vào Clipboard
+
+                            Clipboard.SetImage(resizedImage);
+                            string fullMessage = $"[{currentTime}-Server]:Đã gửi 1 ảnh ";
+                            // Thêm dòng mới trước khi chèn ảnh
+                            vbserver.SelectionAlignment = HorizontalAlignment.Right;
+                            vbserver.AppendText(fullMessage);
+                            vbserver.AppendText(Environment.NewLine);
+
+                            // Chèn ảnh vào RichTextBox
+                            vbserver.Paste();
+
+                            // Thêm dòng mới sau khi chèn ảnh
+                            vbserver.AppendText(Environment.NewLine);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show("Error inserting image: " + ex.Message);
+                    }
+                }
+            }
+            vbserver.ReadOnly = true;
+        }
+
+
 
 
     }

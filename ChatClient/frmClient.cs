@@ -11,6 +11,7 @@ using System.Windows.Forms;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
+
 namespace ChatClient
 {
     public partial class frmClient : Form
@@ -20,6 +21,7 @@ namespace ChatClient
         private IPEndPoint iep;
         private int port = 9999;
         private Thread receivingThread;
+        private string currentTime = DateTime.Now.ToString("HH:mm");
         public frmClient()
         {
             InitializeComponent();
@@ -33,17 +35,12 @@ namespace ChatClient
                 iep = new IPEndPoint(ia, port);
                 //socketclient.Connect(iep);
                 AppendMessage("Đang kết nối tới server.", true);
-
-
-
                 var result = socketclient.BeginConnect(iep, null, null);
                 bool success = result.AsyncWaitHandle.WaitOne(100); 
                 if (!success){
                     throw new SocketException((int)SocketError.TimedOut);
                 }
                 socketclient.EndConnect(result); 
-
-
                 receivingThread = new Thread(ReceiveData);
                 receivingThread.IsBackground = true;
                 receivingThread.Start();
@@ -94,7 +91,6 @@ namespace ChatClient
                                     MessageBoxIcon.Warning);
                     return;
                 }
-                string currentTime = DateTime.Now.ToString("HH:mm:ss");
                 string message = txtSend.Text;
                 string fullMessage = $"[{currentTime}-{socketclient.LocalEndPoint}]: {message}";
                 byte[] data = Encoding.UTF8.GetBytes(fullMessage);
@@ -125,11 +121,7 @@ namespace ChatClient
                 vbclient.Clear();
             });
         }
-        private void frmClient_FormClosing(object sender, FormClosingEventArgs e)
-        {
-            receivingThread?.Abort();
-            socketclient?.Close();
-        }
+        
         private void DeleteMessage(string message)
         {
             vbclient.Invoke((MethodInvoker)delegate
@@ -142,24 +134,7 @@ namespace ChatClient
                 }
             });
         }
-        private void btnDeleteMessage_Click(object sender, EventArgs e)
-        {
-            if (vbclient.SelectedText.Length > 0)
-            {
-                vbclient.ReadOnly = false;
-                string selectedText = vbclient.SelectedText;
-                vbclient.SelectedText = string.Empty;
-
-                // Gửi lệnh xóa tới server
-                byte[] data = Encoding.UTF8.GetBytes("[delete]" + selectedText);
-                socketclient.Send(data);
-                vbclient.ReadOnly = true;
-            }
-            else
-            {
-                MessageBox.Show("Vui lòng bôi đen tin nhắn cần xóa!", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-            }
-        }
+       
 
         private void btnEmoij_Click(object sender, EventArgs e)
         {
@@ -201,7 +176,74 @@ namespace ChatClient
 
         private void btnImg_Click(object sender, EventArgs e)
         {
+            vbclient.ReadOnly = false;
 
+            using (OpenFileDialog openFileDialog = new OpenFileDialog())
+            {
+                openFileDialog.Filter = "Image Files|*.jpg;*.jpeg;*.png;*.bmp;*.gif";
+                openFileDialog.Title = "Select an Image";
+                if (openFileDialog.ShowDialog() == DialogResult.OK)
+                {
+                    string imagePath = openFileDialog.FileName;
+                    try
+                    {
+                        Image originalImage = Image.FromFile(imagePath);
+
+                        // Điều chỉnh kích thước (ví dụ: 100x100 pixel)
+                        int newWidth = 200;
+                        int newHeight = 150;
+                        using (Bitmap resizedImage = new Bitmap(originalImage, newWidth, newHeight))
+                        {
+                            // Đặt ảnh vào Clipboard
+                            Clipboard.SetImage(resizedImage);
+                            string fullMessage = $"[{currentTime}-Server]:Đã gửi 1 ảnh ";
+                            // Thêm dòng mới trước khi chèn ảnh
+                            vbclient.SelectionAlignment = HorizontalAlignment.Right;
+                            vbclient.AppendText(fullMessage);
+                            vbclient.AppendText(Environment.NewLine);
+
+                            // Chèn ảnh vào RichTextBox
+                            vbclient.Paste();
+                            // Thêm dòng mới sau khi chèn ảnh
+                            vbclient.AppendText(Environment.NewLine);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show("Error inserting image: " + ex.Message);
+                    }
+                }
+            }
+            vbclient.ReadOnly = true;
+        }
+        private void btnDeleteMessage_Click(object sender, EventArgs e)
+        {
+            if (vbclient.SelectedText.Length > 0)
+            {
+                vbclient.ReadOnly = false;
+                string selectedText = vbclient.SelectedText;
+                vbclient.SelectedText = string.Empty;
+
+                // Gửi lệnh xóa tới server
+                byte[] data = Encoding.UTF8.GetBytes("[delete]" + selectedText);
+                socketclient.Send(data);
+                vbclient.ReadOnly = true;
+            }
+            else
+            {
+                MessageBox.Show("Vui lòng bôi đen tin nhắn cần xóa!", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            }
+        }
+
+        private void btnSendFile_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void frmClient_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            receivingThread?.Abort();
+            socketclient?.Close();
         }
     }
 }
