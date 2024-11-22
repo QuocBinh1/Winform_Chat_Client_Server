@@ -140,6 +140,11 @@ namespace ChatClient
                 File.WriteAllBytes(downloadPath, fileData);
                 AppendMessage($"Tệp {fileName} đã được tải về: {downloadPath}", false);
             }
+            else if (message.StartsWith("[delete]"))
+            {
+                string messageToDelete = message.Substring(8);
+                DeleteMessage(messageToDelete); // Xóa tin nhắn trên client
+            }
 
             else
             {
@@ -282,14 +287,14 @@ namespace ChatClient
         {
             if (vbclient.SelectedText.Length > 0)
             {
-                vbclient.ReadOnly = false;
                 string selectedText = vbclient.SelectedText;
-                vbclient.SelectedText = string.Empty;
 
                 // Gửi lệnh xóa tới server
                 byte[] data = Encoding.UTF8.GetBytes("[delete]" + selectedText);
                 client.Send(data);
-                vbclient.ReadOnly = true;
+
+                // Xóa tin nhắn trên giao diện client
+                DeleteMessage(selectedText);
             }
             else
             {

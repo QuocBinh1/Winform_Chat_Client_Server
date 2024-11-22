@@ -97,6 +97,15 @@ namespace AppChat
                         // Gửi tệp đến các client khác
                         BroadcastFile(fileName, fileData, clientSocket);
                     }
+                    else if (text.StartsWith("[delete]"))
+                    {
+                        string messageToDelete = text.Substring(8);
+                        // Xóa trên server
+                        DeleteMessage(messageToDelete);
+
+                        // Phát lệnh xóa tới tất cả các client
+                        BroadcastMessage("[delete]" + messageToDelete, null);
+                    }
                     else
                     {
                         AppendMessage($"{text}", false);
@@ -369,6 +378,7 @@ namespace AppChat
 
         private void DeleteMessage(string message)
         {
+            // Xóa tin nhắn trên server
             vbserver.Invoke((MethodInvoker)delegate
             {
                 int index = vbserver.Text.IndexOf(message);
@@ -379,7 +389,7 @@ namespace AppChat
                 }
             });
 
-            // Gửi lệnh xóa tin nhắn tới tất cả các client
+            // Gửi lệnh xóa tới tất cả các client
             BroadcastMessage("[delete]" + message, null);
         }
 
