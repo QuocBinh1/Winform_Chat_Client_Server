@@ -36,8 +36,8 @@
             this.toolStrip1 = new System.Windows.Forms.ToolStrip();
             this.btnEmoij = new System.Windows.Forms.ToolStripButton();
             this.btnDeleteMessage = new System.Windows.Forms.ToolStripButton();
-            this.btnSendFile = new System.Windows.Forms.ToolStripButton();
             this.btnImg = new System.Windows.Forms.ToolStripButton();
+            this.btnSendFile = new System.Windows.Forms.ToolStripButton();
             this.lblClientID = new System.Windows.Forms.Label();
             this.label2 = new System.Windows.Forms.Label();
             this.toolStrip1.SuspendLayout();
@@ -79,7 +79,6 @@
             this.vbclient.Font = new System.Drawing.Font("Microsoft Sans Serif", 10.2F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.vbclient.Location = new System.Drawing.Point(12, 49);
             this.vbclient.Name = "vbclient";
-            this.vbclient.ReadOnly = true;
             this.vbclient.Size = new System.Drawing.Size(552, 309);
             this.vbclient.TabIndex = 4;
             this.vbclient.Text = "";
@@ -95,7 +94,7 @@
             this.btnSendFile});
             this.toolStrip1.Location = new System.Drawing.Point(12, 361);
             this.toolStrip1.Name = "toolStrip1";
-            this.toolStrip1.Size = new System.Drawing.Size(168, 27);
+            this.toolStrip1.Size = new System.Drawing.Size(129, 27);
             this.toolStrip1.TabIndex = 8;
             this.toolStrip1.Text = "toolStrip1";
             // 
@@ -119,16 +118,6 @@
             this.btnDeleteMessage.Text = "toolStripButton1";
             this.btnDeleteMessage.Click += new System.EventHandler(this.btnDeleteMessage_Click);
             // 
-            // btnSendFile
-            // 
-            this.btnSendFile.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
-            this.btnSendFile.Image = ((System.Drawing.Image)(resources.GetObject("btnSendFile.Image")));
-            this.btnSendFile.ImageTransparentColor = System.Drawing.Color.Magenta;
-            this.btnSendFile.Name = "btnSendFile";
-            this.btnSendFile.Size = new System.Drawing.Size(29, 24);
-            this.btnSendFile.Text = "toolStripButton1";
-            this.btnSendFile.Click += new System.EventHandler(this.btnSendFile_Click);
-            // 
             // btnImg
             // 
             this.btnImg.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
@@ -138,6 +127,16 @@
             this.btnImg.Size = new System.Drawing.Size(29, 24);
             this.btnImg.Text = "toolStripButton2";
             this.btnImg.Click += new System.EventHandler(this.btnImg_Click);
+            // 
+            // btnSendFile
+            // 
+            this.btnSendFile.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
+            this.btnSendFile.Image = ((System.Drawing.Image)(resources.GetObject("btnSendFile.Image")));
+            this.btnSendFile.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.btnSendFile.Name = "btnSendFile";
+            this.btnSendFile.Size = new System.Drawing.Size(29, 24);
+            this.btnSendFile.Text = "toolStripButton1";
+            this.btnSendFile.Click += new System.EventHandler(this.btnSendFile_Click);
             // 
             // lblClientID
             // 

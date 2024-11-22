@@ -12,18 +12,20 @@ using System.Net;
 using System.Net.Sockets;
 using System.Threading;
 using System.Reflection.Emit;
+using System.IO;
+using System.Runtime.InteropServices;
 
 namespace AppChat
 {
     public partial class frmServer : Form
     {
-        private Socket socketserver;
+        private Socket server;
         private IPEndPoint iep;
         private IPAddress ia;
         private int port = 9999;
         private Thread listeningThread;
         private Dictionary<Socket, string> clientSockets = new Dictionary<Socket, string>();
-
+        private List<Socket> clients = new List<Socket>();
         private string currentTime = DateTime.Now.ToString("HH:mm");
         
 
@@ -46,33 +48,82 @@ namespace AppChat
         private void ReceiveData(object obj)
         {
             Socket clientSocket = (Socket)obj;
-            byte[] buffer = new byte[1024];
-            int receivedBytes;
+            byte[] data = new byte[1024 * 1024 * 2];
             try
             {
-                while ((receivedBytes = clientSocket.Receive(buffer)) > 0)
+                while (true)
                 {
-                    string text = Encoding.UTF8.GetString(buffer, 0, receivedBytes);
-                    if (text.StartsWith("[delete]"))
+                    int receivedBytes = clientSocket.Receive(data);
+                    if (receivedBytes == 0) throw new SocketException(); // Ngắt kết nối
+
+                    string text = Encoding.UTF8.GetString(data, 0, receivedBytes);
+
+                    if (text.StartsWith("IMAGE:"))
                     {
-                        DeleteMessage(text.Substring(8));
+                        // Parse thông tin ảnh
+
+                        string[] parts = text.Split(':');
+                        string fileName = parts[1];
+                        int fileSize = int.Parse(parts[2]);
+
+                        byte[] imageData = new byte[fileSize];
+                        int totalReceived = 0;
+                        while (totalReceived < fileSize)
+                        {
+                            int bytesReceived = clientSocket.Receive(imageData, totalReceived, fileSize - totalReceived, SocketFlags.None);
+                            totalReceived += bytesReceived;
+                        }
+
+                        // Save or display the image
+                        AppendMessage($"Received image {currentTime}: {fileName}", false);
+                        ShowImageInRichTextBox(imageData, HorizontalAlignment.Left);
+                        BroadcastImage(fileName, imageData, clientSocket);
+
                     }
                     else
                     {
-                        AppendMessage(text, false);
+                        AppendMessage($"{text}", false);
+                        // Phát sóng tin nhắn
                         BroadcastMessage(text, clientSocket);
                     }
                 }
             }
-            catch (SocketException ex)
+            catch (SocketException)
             {
-                AppendMessage("Client đã ngắt kết nối: " + ex.Message, false);
+                AppendMessage($"Client {clientSockets[clientSocket]} đã ngắt kết nối.", false);
             }
             finally
             {
                 clientSockets.Remove(clientSocket);
                 clientSocket.Close();
-                UpdateClientList(); // Cập nhật GroupBox sau khi client ngắt kết nối
+                UpdateClientList();
+            }
+        }
+        private void BroadcastImage(string fileName, byte[] imageData, Socket excludeSocket)
+        {
+            // Tạo header cho dữ liệu ảnh
+            string header = $"IMAGE:{fileName}:{imageData.Length}";
+            byte[] headerData = Encoding.UTF8.GetBytes(header);
+
+            foreach (var clientSocket in clientSockets.Keys.ToList())
+            {
+                if (clientSocket != excludeSocket && clientSocket.Connected)
+                {
+                    try
+                    {
+                        // Gửi header trước
+                        clientSocket.Send(headerData);
+                        Thread.Sleep(100); // Thêm thời gian chờ ngắn để đảm bảo header được nhận trước
+                                           // Gửi dữ liệu ảnh
+                        clientSocket.Send(imageData);
+                    }
+                    catch (SocketException ex)
+                    {
+                        AppendMessage($"Lỗi gửi ảnh tới client: {ex.Message}", true);
+                        clientSockets.Remove(clientSocket);
+                        clientSocket.Close();
+                    }
+                }
             }
         }
 
@@ -80,14 +131,25 @@ namespace AppChat
         private void BroadcastMessage(string message, Socket excludeSocket)
         {
             byte[] data = Encoding.UTF8.GetBytes(message);
-            foreach (var client in clientSockets.Keys)
+            foreach (var clientSocket in clientSockets.Keys.ToList())
             {
-                if (client != excludeSocket)
+                if (clientSocket != excludeSocket && clientSocket.Connected)
                 {
-                    client.Send(data);
+                    try
+                    {
+                        clientSocket.Send(data);
+                    }
+                    catch (SocketException ex)
+                    {
+                        AppendMessage($"Lỗi gửi tới client: {ex.Message}", true);
+                        clientSockets.Remove(clientSocket);
+                        clientSocket.Close();
+                    }
                 }
             }
         }
+
+
 
         private void SendMessageToClient(string message, string clientIP)
         {
@@ -110,36 +172,57 @@ namespace AppChat
             string fullMessage = $"[{currentTime}-Server]: {message}";
             byte[] data = Encoding.UTF8.GetBytes(fullMessage);
 
+            // Lấy danh sách các client được chọn
             List<Socket> selectedClients = new List<Socket>();
-
             foreach (var control in groupBox1.Controls)
             {
                 if (control is CheckBox checkBox && checkBox.Checked)
                 {
-                    Socket clientSocket = (Socket)checkBox.Tag;
-                    selectedClients.Add(clientSocket);
+                    if (checkBox.Tag is Socket clientSocket && clientSocket.Connected)
+                    {
+                        selectedClients.Add(clientSocket);
+                    }
                 }
             }
 
-            if (selectedClients.Count > 0)
+            // Gửi tin nhắn đến các client đã chọn
+            foreach (var clientSocket in selectedClients)
             {
-                foreach (var clientSocket in selectedClients)
+                try
                 {
                     clientSocket.Send(data);
                 }
-            }
-            else
-            {
-                // Nếu không có client nào được chọn, gửi tin nhắn đến tất cả
-                foreach (var clientSocket in clientSockets.Keys)
+                catch (SocketException ex)
                 {
-                    clientSocket.Send(data);
+                    AppendMessage($"Lỗi gửi tới client: {ex.Message}", true);
+                    clientSockets.Remove(clientSocket);
+                }
+            }
+
+            // Gửi tin nhắn đến tất cả nếu không có client nào được chọn
+            if (selectedClients.Count == 0)
+            {
+                foreach (var clientSocket in clientSockets.Keys.ToList())
+                {
+                    if (clientSocket.Connected)
+                    {
+                        try
+                        {
+                            clientSocket.Send(data);
+                        }
+                        catch (SocketException ex)
+                        {
+                            AppendMessage($"Lỗi gửi tới client: {ex.Message}", true);
+                            clientSockets.Remove(clientSocket);
+                        }
+                    }
                 }
             }
 
             AppendMessage(fullMessage, true);
             txtSend.Clear();
         }
+
 
 
         private void btnCreateSocketServer_Click(object sender, EventArgs e)
@@ -150,16 +233,16 @@ namespace AppChat
             {
                 try
                 {
-                    socketserver = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+                    server = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
                     ia = IPAddress.Parse("127.0.0.1");
                     iep = new IPEndPoint(ia, port);
-                    socketserver.Bind(iep);
-                    socketserver.Listen(50);
+                    server.Bind(iep);
+                    server.Listen(50);
                     MessageBox.Show("Đã tạo socket thành công", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     listeningThread = new Thread(ListenForClients);
                     listeningThread.IsBackground = true;
                     listeningThread.Start();
-                    label3.Text = socketserver.LocalEndPoint.ToString();
+                    label3.Text = server.LocalEndPoint.ToString();
 
                 }
                 catch (Exception ex)
@@ -179,7 +262,7 @@ namespace AppChat
             {
                 try
                 {
-                    Socket tempClient = socketserver.Accept();
+                    Socket tempClient = server.Accept();
                     string clientInfo = tempClient.RemoteEndPoint.ToString();
 
                     this.Invoke((MethodInvoker)delegate
@@ -210,7 +293,7 @@ namespace AppChat
             {
                 client.Close();
             }
-            socketserver?.Close();
+            server?.Close();
         }
 
         private void UpdateClientList()
@@ -218,21 +301,30 @@ namespace AppChat
             groupBox1.Invoke((MethodInvoker)delegate
             {
                 groupBox1.Controls.Clear();
-                int y = 10; // Vị trí ban đầu của checkbox trong GroupBox
-                foreach (var client in clientSockets)
+                int y = 10; // Vị trí ban đầu
+                foreach (var client in clientSockets.ToList())
                 {
-                    CheckBox checkBox = new CheckBox
+                    if (client.Key.Connected)
                     {
-                        Text = client.Value,
-                        Tag = client.Key, // Lưu Socket vào Tag để dễ sử dụng sau
-                        Location = new Point(10, y),
-                        AutoSize = true
-                    };
-                    groupBox1.Controls.Add(checkBox);
-                    y += 30; // Khoảng cách giữa các checkbox
+                        CheckBox checkBox = new CheckBox
+                        {
+                            Text = client.Value,
+                            Tag = client.Key,
+                            Location = new Point(10, y),
+                            AutoSize = true
+                        };
+                        groupBox1.Controls.Add(checkBox);
+                        y += 30;
+                    }
+                    else
+                    {
+                        clientSockets.Remove(client.Key);
+                        client.Key.Close();
+                    }
                 }
             });
         }
+
 
 
         private void DeleteMessage(string message)
@@ -321,44 +413,99 @@ namespace AppChat
             vbserver.ReadOnly = false;
             using (OpenFileDialog openFileDialog = new OpenFileDialog())
             {
-                openFileDialog.Filter = "Image Files|*.jpg;*.jpeg;*.png;*.bmp;*.gif";
+                openFileDialog.Filter = "Image Files|*.jpg;*.jpeg;*.png;*.bmp";
                 openFileDialog.Title = "Select an Image";
+
                 if (openFileDialog.ShowDialog() == DialogResult.OK)
                 {
-                    string imagePath = openFileDialog.FileName;
-                    try
+                    string filePath = openFileDialog.FileName;
+                    byte[] fileData = File.ReadAllBytes(filePath);
+                    string fileName = Path.GetFileName(filePath);
+
+                    // Tạo header chứa thông tin về ảnh
+                    string messageHeader = $"IMAGE:{fileName}:{fileData.Length}";
+                    byte[] headerData = Encoding.UTF8.GetBytes(messageHeader);
+
+                    // Lấy danh sách các client được chọn
+                    List<Socket> selectedClients = new List<Socket>();
+                    foreach (var control in groupBox1.Controls)
                     {
-                        Image originalImage = Image.FromFile(imagePath);
-
-                        // Điều chỉnh kích thước (ví dụ: 100x100 pixel)
-                        int newWidth = 200;
-                        int newHeight = 150;
-
-                        using (Bitmap resizedImage = new Bitmap(originalImage, newWidth, newHeight))
+                        if (control is CheckBox checkBox && checkBox.Checked)
                         {
-                            // Đặt ảnh vào Clipboard
-
-                            Clipboard.SetImage(resizedImage);
-                            string fullMessage = $"[{currentTime}-Server]:Đã gửi 1 ảnh ";
-                            // Thêm dòng mới trước khi chèn ảnh
-                            vbserver.SelectionAlignment = HorizontalAlignment.Right;
-                            vbserver.AppendText(fullMessage);
-                            vbserver.AppendText(Environment.NewLine);
-
-                            // Chèn ảnh vào RichTextBox
-                            vbserver.Paste();
-
-                            // Thêm dòng mới sau khi chèn ảnh
-                            vbserver.AppendText(Environment.NewLine);
+                            if (checkBox.Tag is Socket clientSocket && clientSocket.Connected)
+                            {
+                                selectedClients.Add(clientSocket);
+                            }
                         }
                     }
-                    catch (Exception ex)
+
+                    // Nếu không có client nào được chọn, gửi đến tất cả client
+                    if (selectedClients.Count == 0)
                     {
-                        MessageBox.Show("Error inserting image: " + ex.Message);
+                        selectedClients.AddRange(clientSockets.Keys.Where(client => client.Connected));
                     }
+
+                    // Gửi ảnh đến các client được chọn
+                    foreach (var clientSocket in selectedClients)
+                    {
+                        try
+                        {
+                            // Gửi header
+                            clientSocket.Send(headerData);
+                            Thread.Sleep(100); // Đảm bảo header được gửi trước
+
+                            // Gửi dữ liệu ảnh
+                            clientSocket.Send(fileData);
+                        }
+                        catch (SocketException ex)
+                        {
+                            AppendMessage($"Lỗi khi gửi ảnh tới client: {ex.Message}", true);
+                            clientSockets.Remove(clientSocket);
+                            clientSocket.Close();
+                        }
+                    }
+
+                    // Hiển thị ảnh trên giao diện server
+                    AppendMessage($"[{currentTime}-Bạn]: {fileName}", true);
+                    ShowImageInRichTextBox(fileData, HorizontalAlignment.Right);
                 }
             }
-            vbserver.ReadOnly = true;
+        }
+
+
+        private void ShowImageInRichTextBox(byte[] imageData, HorizontalAlignment alignment)
+        {
+            this.Invoke((MethodInvoker)delegate
+            {
+                using (MemoryStream ms = new MemoryStream(imageData))
+                {
+                    Image img = Image.FromStream(ms);
+
+                    // Đảm bảo thao tác với Clipboard trong STA thread
+                    if (Clipboard.ContainsImage())
+                    {
+                        
+                        try
+                        {
+                            Clipboard.Clear();  // Xóa clipboard nếu có hình ảnh cũ
+                            // Thao tác với clipboard trong STA thread
+                            Clipboard.SetImage(img);
+                        }
+                        catch (ExternalException ex)
+                        {
+                            // Log lỗi nếu không thành công
+                            MessageBox.Show($"Lỗi khi thao tác với Clipboard: {ex.Message}", "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        }
+                    }
+                   
+                    // Tiến hành dán ảnh vào RichTextBox
+                    vbserver.Select(vbserver.TextLength, 0);
+                    vbserver.SelectionAlignment = alignment;
+                    vbserver.Paste();  // Dán ảnh vào RichTextBox
+                    vbserver.AppendText("\n");
+                    vbserver.SelectionAlignment = HorizontalAlignment.Left;
+                }
+            });
         }
 
 

@@ -36,8 +36,8 @@
             this.toolStrip1 = new System.Windows.Forms.ToolStrip();
             this.btnEmoij = new System.Windows.Forms.ToolStripButton();
             this.btnDeleteMessage = new System.Windows.Forms.ToolStripButton();
-            this.btnSendFile = new System.Windows.Forms.ToolStripButton();
             this.btnSendImage = new System.Windows.Forms.ToolStripButton();
+            this.btnSendFile = new System.Windows.Forms.ToolStripButton();
             this.label2 = new System.Windows.Forms.Label();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
             this.label1 = new System.Windows.Forms.Label();
@@ -82,7 +82,6 @@
             this.vbserver.Font = new System.Drawing.Font("Microsoft Sans Serif", 10.2F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.vbserver.Location = new System.Drawing.Point(162, 44);
             this.vbserver.Name = "vbserver";
-            this.vbserver.ReadOnly = true;
             this.vbserver.Size = new System.Drawing.Size(535, 293);
             this.vbserver.TabIndex = 5;
             this.vbserver.Text = "";
@@ -123,16 +122,6 @@
             this.btnDeleteMessage.Text = "toolStripButton1";
             this.btnDeleteMessage.Click += new System.EventHandler(this.btnDeleteMessage_Click_1);
             // 
-            // btnSendFile
-            // 
-            this.btnSendFile.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
-            this.btnSendFile.Image = ((System.Drawing.Image)(resources.GetObject("btnSendFile.Image")));
-            this.btnSendFile.ImageTransparentColor = System.Drawing.Color.Magenta;
-            this.btnSendFile.Name = "btnSendFile";
-            this.btnSendFile.Size = new System.Drawing.Size(29, 24);
-            this.btnSendFile.Text = "toolStripButton1";
-            this.btnSendFile.Click += new System.EventHandler(this.btnSendFile_Click);
-            // 
             // btnSendImage
             // 
             this.btnSendImage.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
@@ -142,6 +131,16 @@
             this.btnSendImage.Size = new System.Drawing.Size(29, 24);
             this.btnSendImage.Text = "toolStripButton2";
             this.btnSendImage.Click += new System.EventHandler(this.btnSendImage_Click);
+            // 
+            // btnSendFile
+            // 
+            this.btnSendFile.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
+            this.btnSendFile.Image = ((System.Drawing.Image)(resources.GetObject("btnSendFile.Image")));
+            this.btnSendFile.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.btnSendFile.Name = "btnSendFile";
+            this.btnSendFile.Size = new System.Drawing.Size(29, 24);
+            this.btnSendFile.Text = "toolStripButton1";
+            this.btnSendFile.Click += new System.EventHandler(this.btnSendFile_Click);
             // 
             // label2
             // 
