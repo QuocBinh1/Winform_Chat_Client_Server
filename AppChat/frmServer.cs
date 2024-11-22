@@ -55,17 +55,12 @@ namespace AppChat
                 {
                     int receivedBytes = clientSocket.Receive(data);
                     if (receivedBytes == 0) throw new SocketException(); // Ngắt kết nối
-
                     string text = Encoding.UTF8.GetString(data, 0, receivedBytes);
-
                     if (text.StartsWith("IMAGE:"))
                     {
-                        // Parse thông tin ảnh
-
                         string[] parts = text.Split(':');
                         string fileName = parts[1];
                         int fileSize = int.Parse(parts[2]);
-
                         byte[] imageData = new byte[fileSize];
                         int totalReceived = 0;
                         while (totalReceived < fileSize)
@@ -73,12 +68,34 @@ namespace AppChat
                             int bytesReceived = clientSocket.Receive(imageData, totalReceived, fileSize - totalReceived, SocketFlags.None);
                             totalReceived += bytesReceived;
                         }
-
                         // Save or display the image
                         AppendMessage($"Received image {currentTime}: {fileName}", false);
                         ShowImageInRichTextBox(imageData, HorizontalAlignment.Left);
                         BroadcastImage(fileName, imageData, clientSocket);
+                    }
+                    else if (text.StartsWith("FILE:"))
+                    {
+                        string[] parts = text.Split(':');
+                        string fileName = parts[1];
+                        int fileSize = int.Parse(parts[2]);
 
+                        byte[] fileData = new byte[fileSize];
+                        int totalReceived = 0;
+                        while (totalReceived < fileSize)
+                        {
+                            int bytesReceived = clientSocket.Receive(fileData, totalReceived, fileSize - totalReceived, SocketFlags.None);
+                            totalReceived += bytesReceived;
+                        }
+
+                        // Lưu tệp vào thư mục ServerFiles
+                        string savePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "ServerFiles", fileName);
+                        Directory.CreateDirectory(Path.GetDirectoryName(savePath));
+                        File.WriteAllBytes(savePath, fileData);
+
+                        AppendMessage($"Đã nhận được tệp {fileName} từ client. Lưu tại: {savePath}", false);
+
+                        // Gửi tệp đến các client khác
+                        BroadcastFile(fileName, fileData, clientSocket);
                     }
                     else
                     {
@@ -99,6 +116,29 @@ namespace AppChat
                 UpdateClientList();
             }
         }
+        private void BroadcastFile(string fileName, byte[] fileData, Socket excludeSocket)
+        {
+            string header = $"FILE:{fileName}:{fileData.Length}";
+            byte[] headerData = Encoding.UTF8.GetBytes(header);
+
+            foreach (var clientSocket in clientSockets.Keys.ToList())
+            {
+                if (clientSocket != excludeSocket && clientSocket.Connected)
+                {
+                    try
+                    {
+                        clientSocket.Send(headerData);
+                        Thread.Sleep(100);
+                        clientSocket.Send(fileData);
+                    }
+                    catch (SocketException ex)
+                    {
+                        AppendMessage($"Lỗi gửi tệp tới client: {ex.Message}", true);
+                    }
+                }
+            }
+        }
+
         private void BroadcastImage(string fileName, byte[] imageData, Socket excludeSocket)
         {
             // Tạo header cho dữ liệu ảnh
@@ -405,7 +445,40 @@ namespace AppChat
 
         private void btnSendFile_Click(object sender, EventArgs e)
         {
+            using (OpenFileDialog openFileDialog = new OpenFileDialog())
+            {
+                openFileDialog.Title = "Select a File to Send";
+                if (openFileDialog.ShowDialog() == DialogResult.OK)
+                {
+                    string filePath = openFileDialog.FileName;
+                    byte[] fileData = File.ReadAllBytes(filePath);
+                    string fileName = Path.GetFileName(filePath);
 
+                    // Tạo header chứa thông tin tệp
+                    string header = $"FILE:{fileName}:{fileData.Length}";
+                    byte[] headerData = Encoding.UTF8.GetBytes(header);
+
+                    // Gửi tệp đến tất cả các client
+                    foreach (var clientSocket in clientSockets.Keys.ToList())
+                    {
+                        if (clientSocket.Connected)
+                        {
+                            try
+                            {
+                                clientSocket.Send(headerData);
+                                Thread.Sleep(100); // Đảm bảo header được gửi trước
+                                clientSocket.Send(fileData);
+                            }
+                            catch (SocketException ex)
+                            {
+                                AppendMessage($"Lỗi gửi tệp: {ex.Message}", true);
+                            }
+                        }
+                    }
+
+                    AppendMessage($"Bạn đã gửi tệp: {fileName}", true);
+                }
+            }
         }
 
         private void btnSendImage_Click(object sender, EventArgs e)

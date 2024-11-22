@@ -102,7 +102,6 @@ namespace ChatClient
                 string[] parts = message.Split(':');
                 string fileName = parts[1];
                 int fileSize = int.Parse(parts[2]);
-
                 // Nhận dữ liệu ảnh
                 byte[] imageData = new byte[fileSize];
                 int totalReceived = 0;
@@ -111,7 +110,6 @@ namespace ChatClient
                     int bytesReceived = client.Receive(imageData, totalReceived, fileSize - totalReceived, SocketFlags.None);
                     totalReceived += bytesReceived;
                 }
-
                 // Hiển thị ảnh trên client
                 if (totalReceived == fileSize)
                 {
@@ -123,6 +121,26 @@ namespace ChatClient
                     AppendMessage($"Failed to receive full image: {fileName}", false);
                 }
             }
+            else if (message.StartsWith("FILE:"))
+            {
+                string[] parts = message.Split(':');
+                string fileName = parts[1];
+                int fileSize = int.Parse(parts[2]);
+
+                byte[] fileData = new byte[fileSize];
+                int totalReceived = 0;
+                while (totalReceived < fileSize)
+                {
+                    int bytesReceived = client.Receive(fileData, totalReceived, fileSize - totalReceived, SocketFlags.None);
+                    totalReceived += bytesReceived;
+                }
+
+                // Lưu tệp vào thư mục Downloads
+                string downloadPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads", fileName);
+                File.WriteAllBytes(downloadPath, fileData);
+                AppendMessage($"Tệp {fileName} đã được tải về: {downloadPath}", false);
+            }
+
             else
             {
                 // Xử lý tin nhắn văn bản
@@ -338,7 +356,27 @@ namespace ChatClient
 
         private void btnSendFile_Click(object sender, EventArgs e)
         {
+            using (OpenFileDialog openFileDialog = new OpenFileDialog())
+            {
+                openFileDialog.Title = "Select a File to Send";
+                if (openFileDialog.ShowDialog() == DialogResult.OK)
+                {
+                    string filePath = openFileDialog.FileName;
+                    byte[] fileData = File.ReadAllBytes(filePath);
+                    string fileName = Path.GetFileName(filePath);
 
+                    // Gửi header chứa thông tin tệp
+                    string header = $"FILE:{fileName}:{fileData.Length}";
+                    byte[] headerData = Encoding.UTF8.GetBytes(header);
+                    client.Send(headerData);
+                    Thread.Sleep(100); // Đảm bảo header được gửi trước
+
+                    // Gửi dữ liệu tệp
+                    client.Send(fileData);
+
+                    AppendMessage($"{currentTime}-[Bạn đã gửi tệp]: {fileName}", true);
+                }
+            }
         }
 
 
