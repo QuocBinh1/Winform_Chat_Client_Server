@@ -1,2 +1,3 @@
 Ap Chát qua lại giữa client và Server
-![image](https://github.com/user-attachments/assets/036aea54-6470-4b93-8406-4410bcf7cb25)
+
+![image](https://github.com/user-attachments/assets/ef836294-1f49-4048-ae7d-78f70a8a04e8)
